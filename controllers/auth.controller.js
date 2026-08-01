@@ -24,7 +24,7 @@ export const register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'A user with this email address already exists',
+        message: 'A user with this email address already exists. Please log in.',
       });
     }
 
@@ -43,7 +43,7 @@ export const register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'Registration successful! Welcome to FoodSave LK.',
       token,
       user: {
         id: user._id,
@@ -63,7 +63,7 @@ export const register = async (req, res) => {
 };
 
 /**
- * @desc    Login user with email and password
+ * @desc    Login user with email and password (Only registered users in MongoDB Atlas)
  * @route   POST /api/v1/auth/login
  * @access  Public
  */
@@ -78,12 +78,12 @@ export const login = async (req, res) => {
       });
     }
 
-    // Find user in MongoDB Atlas and include password field
-    const user = await User.findOne({ email }).select('+password');
+    // Search for registered user in MongoDB Atlas
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: 'No registered account found with this email address. Please register first.',
       });
     }
 
@@ -92,10 +92,11 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: 'Incorrect password. Please check your password and try again.',
       });
     }
 
+    // Generate JWT token
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -114,7 +115,7 @@ export const login = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message || 'Server error during login',
+      message: error.message || 'Server error during authentication',
     });
   }
 };
@@ -127,6 +128,12 @@ export const login = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User profile not found in system',
+      });
+    }
     res.status(200).json({
       success: true,
       user,
