@@ -1,0 +1,63 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # ----------------------------------------------------
+  # JOB 1: Continuous Integration (Install & Syntax Check)
+  # ----------------------------------------------------
+  build-and-test:
+    name: Test & Verify Backend REST API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install Backend Dependencies
+        run: npm install
+
+      - name: Verify Server Entry Point Syntax
+        run: node --check server.js
+
+  # ----------------------------------------------------
+  # JOB 2: Continuous Deployment (Railway Hosting)
+  # ----------------------------------------------------
+  deploy-to-railway:
+    name: Deploy to Railway Cloud
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check Railway Secret Credentials
+        id: check_token
+        run: |
+          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "::notice::RAILWAY_TOKEN secret is not configured in GitHub Secrets. Skipping Railway cloud auto-deploy step."
+          else
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Railway via CLI
+        if: steps.check_token.outputs.has_token == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          npm install -g @railway/cli
+          railway up --service backend
