@@ -11,7 +11,7 @@ const generateToken = (id) => {
 };
 
 /**
- * @desc    Register a new user (Consumer / Vendor / NGO / Admin)
+ * @desc    Register a new public user (Consumer / Vendor / NGO)
  * @route   POST /api/v1/auth/register
  * @access  Public
  */
@@ -19,8 +19,16 @@ export const register = async (req, res) => {
   try {
     const { name, email, password, role, phone, outletName, district } = req.body;
 
+    // Security Check: Block public self-registration for ADMIN role
+    if (role === 'ADMIN') {
+      return res.status(400).json({
+        success: false,
+        message: 'Public registration for System Administrator is not permitted. Admin accounts must be created via admin seeder or assigned by an existing administrator.',
+      });
+    }
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -63,7 +71,7 @@ export const register = async (req, res) => {
 };
 
 /**
- * @desc    Login user with email and password (Only registered users in MongoDB Atlas)
+ * @desc    Login user with email and password
  * @route   POST /api/v1/auth/login
  * @access  Public
  */
