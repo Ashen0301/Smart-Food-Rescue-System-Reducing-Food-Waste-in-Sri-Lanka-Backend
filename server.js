@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 // Load Environment Variables
 dotenv.config();
@@ -21,6 +22,7 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
 
 // Health Check Endpoint
 app.get('/api/v1/health', (req, res) => {

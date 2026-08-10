@@ -35,6 +35,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    address: {
+      type: String,
+      trim: true,
+    },
     district: {
       type: String,
       default: 'Colombo',
@@ -42,13 +46,30 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: function () {
-        return this.role !== 'VENDOR'; // Vendors require admin approval
+        return this.role !== 'VENDOR'; // Vendors require Admin verification before posting listings
       },
+    },
+    verifiedAt: {
+      type: Date,
+    },
+    verifiedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
     },
     reliabilityScore: {
       type: Number,
       default: 100,
     },
+    // User Management Module: Notification Settings & Preferences
+    notificationPreferences: {
+      emailAlerts: { type: Boolean, default: true },
+      proximityAlerts: { type: Boolean, default: true },
+      preferredCategories: [{ type: String }],
+      maxRadiusKm: { type: Number, default: 5 },
+      dailyAlertLimit: { type: Number, default: 10 },
+    },
+    // Dietary Preferences for Consumers
+    dietaryPreferences: [{ type: String }],
   },
   { timestamps: true }
 );

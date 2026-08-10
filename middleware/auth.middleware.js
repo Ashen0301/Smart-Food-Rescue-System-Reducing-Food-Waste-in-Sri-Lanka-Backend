@@ -55,3 +55,16 @@ export const authorizeRoles = (...roles) => {
     next();
   };
 };
+
+/**
+ * User Management Module: Ensure Vendors must be verified by an Administrator before posting listings
+ */
+export const requireVendorVerification = (req, res, next) => {
+  if (req.user.role === 'VENDOR' && !req.user.isVerified) {
+    return res.status(403).json({
+      success: false,
+      message: 'Vendor verification pending. You must be verified by an Administrator before posting food listings.',
+    });
+  }
+  next();
+};
