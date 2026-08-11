@@ -4,6 +4,10 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
+import listingRoutes from './routes/listing.routes.js';
+import orderRoutes from './routes/order.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import startExpiryService from './services/expiryService.js';
 
 // Load Environment Variables
 dotenv.config();
@@ -18,11 +22,14 @@ app.use(cors({
   origin: process.env.CLIENT_URL || '*',
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Allow base64 image uploads
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/listings', listingRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Health Check Endpoint
 app.get('/api/v1/health', (req, res) => {
@@ -45,4 +52,6 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 FoodSave LK Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  // Initialize background automatic listing expiration runner
+  startExpiryService();
 });
