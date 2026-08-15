@@ -11,6 +11,22 @@ const generateToken = (id) => {
 };
 
 /**
+ * Helper to structure user response payload with full vendor & user details
+ */
+const formatUserPayload = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  phone: user.phone || '',
+  outletName: user.outletName || user.name,
+  district: user.district || 'Colombo',
+  address: user.address || '',
+  isVerified: user.isVerified,
+  reliabilityScore: user.reliabilityScore || 100,
+});
+
+/**
  * @desc    Register a new public user (Consumer / Vendor / NGO)
  * @route   POST /api/v1/auth/register
  * @access  Public
@@ -43,8 +59,8 @@ export const register = async (req, res) => {
       password,
       role: role || 'CONSUMER',
       phone,
-      outletName,
-      district,
+      outletName: outletName || name,
+      district: district || 'Colombo',
     });
 
     const token = generateToken(user._id);
@@ -53,14 +69,7 @@ export const register = async (req, res) => {
       success: true,
       message: 'Registration successful! Welcome to FoodSave LK.',
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isVerified: user.isVerified,
-        reliabilityScore: user.reliabilityScore,
-      },
+      user: formatUserPayload(user),
     });
   } catch (error) {
     res.status(500).json({
@@ -111,14 +120,7 @@ export const login = async (req, res) => {
       success: true,
       message: 'Login successful',
       token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isVerified: user.isVerified,
-        reliabilityScore: user.reliabilityScore,
-      },
+      user: formatUserPayload(user),
     });
   } catch (error) {
     res.status(500).json({
@@ -144,7 +146,7 @@ export const getProfile = async (req, res) => {
     }
     res.status(200).json({
       success: true,
-      user,
+      user: formatUserPayload(user),
     });
   } catch (error) {
     res.status(500).json({
