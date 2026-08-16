@@ -5,7 +5,7 @@ import DailyNotificationTracking from '../models/DailyNotificationTracking.js';
 import { calculateDistanceKm } from '../services/notificationEngine.js';
 
 /**
- * @desc    Consumer Food Discovery Endpoint (5 km Radius, Search, Filters, Sorting)
+ * @desc    Consumer Food Discovery Endpoint (District-Based Proximity, Search, Filters, Sorting)
  * @route   GET /api/v1/discovery/listings
  * @access  Private (Consumer)
  */
@@ -18,10 +18,11 @@ export const getNearbyConsumerListings = async (req, res) => {
     const {
       search,
       category,
+      district,
       distanceMax,
       priceType,
       availability,
-      sort = 'nearest',
+      sort = 'newest',
     } = req.query;
 
     // Base query: Active listings
@@ -38,24 +39,37 @@ export const getNearbyConsumerListings = async (req, res) => {
       .populate('vendor', 'name outletName phone district reliabilityScore vendorRating')
       .lean();
 
-    // 1. Calculate Haversine distance & attach distanceKm to each listing
+    // 1. Attach vendor District & calculate Haversine distance
     listings = listings.map((l) => {
       const vendorLat = l.latitude || l.vendor?.latitude || 6.9271;
       const vendorLng = l.longitude || l.vendor?.longitude || 79.8612;
       const dist = calculateDistanceKm(consumerLat, consumerLng, vendorLat, vendorLng);
+      const vendorDist = l.vendor?.district || consumer?.district || 'Colombo';
       return {
         ...l,
         distanceKm: dist,
-        vendorName: l.vendor?.outletName || l.vendor?.name || 'Nearby Outlet',
+        district: vendorDist,
+        vendorName: l.vendor?.outletName || l.vendor?.name || 'Local Vendor',
         vendorRating: l.vendor?.vendorRating || 4.8,
       };
     });
 
-    // 2. Filter by distance threshold (default 5 km max radius)
-    const maxRadius = distanceMax ? Number(distanceMax) : 5;
-    listings = listings.filter((l) => l.distanceKm <= maxRadius);
+    // 2. Filter by District if specified (default to consumer's district if passed or 'ALL')
+    if (district && district !== 'ALL') {
+      listings = listings.filter((l) => {
+        const dMatch = l.district.toLowerCase() === district.toLowerCase();
+        const locMatch = l.outletLocation ? l.outletLocation.toLowerCase().includes(district.toLowerCase()) : false;
+        return dMatch || locMatch;
+      });
+    }
 
-    // 3. Search Filter (by food name, category, vendor name, description)
+    // 3. Optional Distance Filter (only if distanceMax is explicitly specified and not 'ALL')
+    if (distanceMax && distanceMax !== 'ALL') {
+      const maxRadius = Number(distanceMax);
+      listings = listings.filter((l) => l.distanceKm <= maxRadius);
+    }
+
+    // 4. Search Filter (by food name, category, vendor name, description, district, location)
     if (search && search.trim()) {
       const q = search.toLowerCase().trim();
       listings = listings.filter(
@@ -63,18 +77,20 @@ export const getNearbyConsumerListings = async (req, res) => {
           l.title.toLowerCase().includes(q) ||
           l.category.toLowerCase().includes(q) ||
           l.description.toLowerCase().includes(q) ||
-          l.vendorName.toLowerCase().includes(q)
+          l.vendorName.toLowerCase().includes(q) ||
+          l.district.toLowerCase().includes(q) ||
+          (l.outletLocation && l.outletLocation.toLowerCase().includes(q))
       );
     }
 
-    // 4. Availability Filter
+    // 5. Availability Filter
     if (availability === 'NOW') {
       listings = listings.filter((l) => l.remainingQuantityKg > 0);
     } else if (availability === 'ALMOST_SOLD_OUT') {
       listings = listings.filter((l) => l.remainingQuantityKg > 0 && l.remainingQuantityKg <= 2);
     }
 
-    // 5. Sorting
+    // 6. Sorting
     if (sort === 'nearest') {
       listings.sort((a, b) => a.distanceKm - b.distanceKm);
     } else if (sort === 'newest') {
@@ -93,8 +109,8 @@ export const getNearbyConsumerListings = async (req, res) => {
       consumerLocation: {
         latitude: consumerLat,
         longitude: consumerLng,
-        locationName: consumer?.locationName || 'Colombo, Sri Lanka',
-        maxRadiusKm: maxRadius,
+        district: consumer?.district || 'Colombo',
+        locationName: `${consumer?.district || 'Colombo'} District, Sri Lanka`,
       },
       listings,
     });
