@@ -1,5 +1,6 @@
 import Listing from '../models/Listing.js';
 import Notification from '../models/Notification.js';
+import { processNewListingNotifications } from '../services/notificationEngine.js';
 
 /**
  * @desc    Create a new surplus food listing
@@ -71,6 +72,11 @@ export const createListing = async (req, res) => {
       allergens: allergens || [],
       additionalNotes,
       status: 'ACTIVE',
+    });
+
+    // Asynchronously trigger notification pipeline to nearby consumers within 5 km
+    processNewListingNotifications(listing, req.app.get('io')).catch((err) => {
+      console.error('❌ Failed to process listing notifications:', err.message);
     });
 
     res.status(201).json({

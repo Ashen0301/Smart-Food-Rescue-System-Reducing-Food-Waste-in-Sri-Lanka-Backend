@@ -71,6 +71,14 @@ const listingSchema = new mongoose.Schema(
       required: [true, 'Please specify outlet/collection location'],
       trim: true,
     },
+    latitude: {
+      type: Number,
+      default: 6.9271, // Default: Colombo, Sri Lanka
+    },
+    longitude: {
+      type: Number,
+      default: 79.8612,
+    },
     freshnessInfo: {
       type: String,
       trim: true,

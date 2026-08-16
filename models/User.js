@@ -43,6 +43,19 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'Colombo',
     },
+    // Location Coordinates (Default: Colombo, Sri Lanka)
+    latitude: {
+      type: Number,
+      default: 6.9271,
+    },
+    longitude: {
+      type: Number,
+      default: 79.8612,
+    },
+    locationName: {
+      type: String,
+      default: 'Colombo, Sri Lanka',
+    },
     isVerified: {
       type: Boolean,
       default: function () {
@@ -60,14 +73,22 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 100,
     },
-    // User Management Module: Notification Settings & Preferences
-    notificationPreferences: {
-      emailAlerts: { type: Boolean, default: true },
-      proximityAlerts: { type: Boolean, default: true },
-      preferredCategories: [{ type: String }],
-      maxRadiusKm: { type: Number, default: 5 },
-      dailyAlertLimit: { type: Number, default: 10 },
+    vendorRating: {
+      type: Number,
+      default: 4.8,
     },
+    // Consumer Notification Preferences
+    notificationPreferences: {
+      nearbyNotificationsEnabled: { type: Boolean, default: true },
+      categoryNotificationsEnabled: { type: Boolean, default: true },
+      dailyNotificationLimit: { type: Number, default: 10 },
+      maxRadiusKm: { type: Number, default: 5 },
+    },
+    // Subscribed Food Categories for Targeted Alerts
+    subscribedCategories: [{
+      type: String,
+      default: ['bakery', 'meals', 'vegetables', 'donations', 'dairy', 'groceries'],
+    }],
     // Dietary Preferences for Consumers
     dietaryPreferences: [{ type: String }],
   },
