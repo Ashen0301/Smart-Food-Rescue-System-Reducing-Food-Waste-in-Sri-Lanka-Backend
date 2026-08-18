@@ -10,6 +10,7 @@ import listingRoutes from './routes/listing.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import discoveryRoutes from './routes/discovery.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import startExpiryService from './services/expiryService.js';
 
 // Load Environment Variables
@@ -61,6 +62,7 @@ app.use('/api/v1/listings', listingRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/discovery', discoveryRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // Health Check Endpoint
 app.get('/api/v1/health', (req, res) => {
