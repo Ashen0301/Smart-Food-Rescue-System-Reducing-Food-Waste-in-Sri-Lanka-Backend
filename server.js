@@ -11,7 +11,10 @@ import orderRoutes from './routes/order.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import discoveryRoutes from './routes/discovery.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import reviewRoutes from './routes/review.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 import startExpiryService from './services/expiryService.js';
+import startReservationService from './services/reservationService.js';
 
 // Load Environment Variables
 dotenv.config();
@@ -63,6 +66,8 @@ app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/discovery', discoveryRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 // Health Check Endpoint
 app.get('/api/v1/health', (req, res) => {
@@ -86,6 +91,7 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log(`🚀 FoodSave LK Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   console.log(`📡 Socket.IO Real-Time Notification Server is ACTIVE`);
-  // Initialize background automatic listing expiration runner
+  // Initialize background automatic listing expiration & reservation cancellation runners
   startExpiryService();
+  startReservationService();
 });

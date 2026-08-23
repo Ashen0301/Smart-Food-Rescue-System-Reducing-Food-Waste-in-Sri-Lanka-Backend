@@ -1,4 +1,6 @@
 import User from '../models/User.js';
+import Listing from '../models/Listing.js';
+import Review from '../models/Review.js';
 
 /**
  * @desc    Get user profile details
@@ -186,6 +188,51 @@ export const getAllUsers = async (req, res) => {
       success: true,
       count: users.length,
       users,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * @desc    Get Vendor Public Profile (For Consumer Discovery & Rating Inspection)
+ * @route   GET /api/v1/users/vendor-profile/:id
+ * @access  Public
+ */
+export const getVendorPublicProfile = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.params.id).select('-password');
+    if (!vendor || vendor.role !== 'VENDOR') {
+      return res.status(404).json({ success: false, message: 'Vendor profile not found' });
+    }
+
+    const activeListings = await Listing.find({ vendor: vendor._id, status: 'ACTIVE' });
+    const allListings = await Listing.find({ vendor: vendor._id });
+    const reviews = await Review.find({ vendor: vendor._id }).sort({ createdAt: -1 }).limit(10);
+
+    const totalFoodListedKg = allListings.reduce((sum, l) => sum + (l.quantityKg || 0), 0);
+    const totalFoodRescuedKg = allListings.reduce((sum, l) => sum + (l.collectedQuantityKg || 0), 0);
+
+    res.status(200).json({
+      success: true,
+      vendor: {
+        id: vendor._id,
+        name: vendor.name,
+        outletName: vendor.outletName || vendor.name,
+        email: vendor.email,
+        phone: vendor.phone,
+        address: vendor.address,
+        district: vendor.district || 'Colombo',
+        vendorRating: vendor.vendorRating || 4.8,
+        ratingCount: reviews.length,
+        reliabilityScore: vendor.reliabilityScore || 100,
+        isVerified: vendor.isVerified,
+        totalFoodListedKg: Math.round(totalFoodListedKg * 10) / 10,
+        totalFoodRescuedKg: Math.round(totalFoodRescuedKg * 10) / 10,
+        activeListingsCount: activeListings.length,
+      },
+      activeListings,
+      reviews,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

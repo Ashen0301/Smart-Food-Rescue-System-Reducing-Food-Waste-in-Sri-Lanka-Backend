@@ -7,10 +7,14 @@ import {
   assignUserRole,
   getUnverifiedVendors,
   getAllUsers,
+  getVendorPublicProfile,
 } from '../controllers/user.controller.js';
 import { protect, authorizeRoles } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
+
+// Public route for viewing vendor profile
+router.get('/vendor-profile/:id', getVendorPublicProfile);
 
 // User self-service routes (Protected)
 router.get('/profile', protect, getUserProfile);

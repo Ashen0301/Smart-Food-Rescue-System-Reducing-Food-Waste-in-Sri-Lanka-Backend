@@ -35,6 +35,9 @@ const orderSchema = new mongoose.Schema(
       required: true,
       default: () => Math.floor(1000 + Math.random() * 9000).toString(), // 4-digit PIN
     },
+    qrCodeData: {
+      type: String,
+    },
     status: {
       type: String,
       enum: ['PENDING', 'CONFIRMED', 'READY_FOR_COLLECTION', 'COLLECTED', 'CANCELLED'],
@@ -44,6 +47,14 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ['UNPAID', 'PAID_OFFLINE', 'FREE'],
       default: 'UNPAID',
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
+    isWaitlist: {
+      type: Boolean,
+      default: false,
     },
     collectedAt: {
       type: Date,
