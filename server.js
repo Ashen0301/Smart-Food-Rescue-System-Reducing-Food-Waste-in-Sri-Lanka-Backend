@@ -13,6 +13,9 @@ import discoveryRoutes from './routes/discovery.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import ngoRoutes from './routes/ngo.routes.js';
+import ngoRequestRoutes from './routes/ngoRequest.routes.js';
+import gamificationRoutes from './routes/gamification.routes.js';
 import startExpiryService from './services/expiryService.js';
 import startReservationService from './services/reservationService.js';
 
@@ -68,6 +71,9 @@ app.use('/api/v1/discovery', discoveryRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/ngo', ngoRoutes);
+app.use('/api/v1/ngo-requests', ngoRequestRoutes);
+app.use('/api/v1/gamification', gamificationRoutes);
 
 // Health Check Endpoint
 app.get('/api/v1/health', (req, res) => {

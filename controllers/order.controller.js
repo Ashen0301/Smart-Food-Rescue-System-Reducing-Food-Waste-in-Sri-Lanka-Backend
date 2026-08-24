@@ -2,6 +2,84 @@ import Order from '../models/Order.js';
 import Listing from '../models/Listing.js';
 import Notification from '../models/Notification.js';
 import Waitlist from '../models/Waitlist.js';
+import DonationCertificate from '../models/DonationCertificate.js';
+import User from '../models/User.js';
+import { checkAndAwardBadges } from './gamification.controller.js';
+
+/**
+ * Helper: Award Points, Update Collection Rate & Evaluate Milestone Badges
+ */
+const updateGamificationOnCollection = async (order) => {
+  try {
+    const consumer = await User.findById(order.customer);
+    const vendor = await User.findById(order.vendor);
+    const kg = order.quantityReservedKg || 1;
+
+    // 1. Award Consumer Gamification Points & Stats
+    if (consumer) {
+      const consumerEarnedPoints = 50 + Math.round(kg * 10);
+      consumer.points = (consumer.points || 0) + consumerEarnedPoints;
+      consumer.totalRescuedKg = (consumer.totalRescuedKg || 0) + kg;
+      consumer.totalCompletedOrders = (consumer.totalCompletedOrders || 0) + 1;
+
+      const totalAttempts = (consumer.totalCompletedOrders || 0) + (consumer.totalExpiredOrders || 0);
+      consumer.collectionRate = Math.min(100, Math.round(((consumer.totalCompletedOrders || 1) / totalAttempts) * 100));
+
+      await consumer.save();
+      await checkAndAwardBadges(consumer);
+    }
+
+    // 2. Award Vendor Gamification Points & Stats
+    if (vendor) {
+      const vendorEarnedPoints = 100 + Math.round(kg * 20);
+      vendor.points = (vendor.points || 0) + vendorEarnedPoints;
+      vendor.totalRescuedKg = (vendor.totalRescuedKg || 0) + kg;
+      vendor.totalCompletedOrders = (vendor.totalCompletedOrders || 0) + 1;
+
+      await vendor.save();
+      await checkAndAwardBadges(vendor);
+    }
+  } catch (err) {
+    console.error('❌ Error updating gamification stats:', err.message);
+  }
+};
+
+/**
+ * Helper: Generate CSR Donation Certificate for Free Community Food Rescues
+ */
+const generateCertificateIfFree = async (order) => {
+  try {
+    if (order.totalPrice === 0 || order.paymentStatus === 'FREE') {
+      const existingCert = await DonationCertificate.findOne({ order: order._id });
+      if (!existingCert) {
+        const donorUser = await User.findById(order.vendor);
+        const recipientUser = await User.findById(order.customer);
+        const targetListing = await Listing.findById(order.listing);
+
+        if (donorUser && recipientUser && targetListing) {
+          await DonationCertificate.create({
+            vendor: donorUser._id,
+            vendorName: donorUser.name,
+            outletName: donorUser.outletName || donorUser.name,
+            recipient: recipientUser._id,
+            recipientName: recipientUser.name,
+            recipientRole: recipientUser.role === 'NGO' ? 'NGO' : 'CONSUMER',
+            order: order._id,
+            listing: targetListing._id,
+            foodTitle: targetListing.title,
+            category: targetListing.category || 'bakery',
+            quantityKg: order.quantityReservedKg,
+            estimatedMeals: Math.round(order.quantityReservedKg * 3),
+            co2SavedKg: Math.round(order.quantityReservedKg * 2.5 * 10) / 10,
+          });
+          console.log(`📜 [DonationCertificate] Certificate generated for order #${order.collectionCode} (${order.quantityReservedKg} kg)`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error generating donation certificate:', err.message);
+  }
+};
 
 /**
  * @desc    Create a new food reservation/order (Consumer)
@@ -165,6 +243,12 @@ export const verifyCollectionPinOrQr = async (req, res) => {
     }
 
     await order.save();
+
+    // Auto-generate CSR Donation Certificate if item was a free donation
+    await generateCertificateIfFree(order);
+
+    // Award Gamification Points & Badges
+    await updateGamificationOnCollection(order);
 
     // Notify customer of successful collection
     await Notification.create({
@@ -362,6 +446,12 @@ export const updateOrderStatus = async (req, res) => {
         listing.collectedQuantityKg = (listing.collectedQuantityKg || 0) + order.quantityReservedKg;
         await listing.save();
       }
+
+      // Auto-generate CSR Donation Certificate if item was a free donation
+      await generateCertificateIfFree(order);
+
+      // Award Gamification Points & Badges
+      await updateGamificationOnCollection(order);
 
       await Notification.create({
         recipient: order.customer,

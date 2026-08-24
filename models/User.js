@@ -77,6 +77,36 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 4.8,
     },
+    // Gamification & Engagement Fields
+    points: {
+      type: Number,
+      default: 0,
+    },
+    totalRescuedKg: {
+      type: Number,
+      default: 0,
+    },
+    totalCompletedOrders: {
+      type: Number,
+      default: 0,
+    },
+    totalExpiredOrders: {
+      type: Number,
+      default: 0,
+    },
+    collectionRate: {
+      type: Number,
+      default: 100,
+    },
+    badges: [
+      {
+        badgeId: { type: String, required: true },
+        name: { type: String, required: true },
+        icon: { type: String, required: true },
+        description: { type: String, required: true },
+        earnedAt: { type: Date, default: Date.now },
+      },
+    ],
     // Consumer Notification Preferences
     notificationPreferences: {
       nearbyNotificationsEnabled: { type: Boolean, default: true },
