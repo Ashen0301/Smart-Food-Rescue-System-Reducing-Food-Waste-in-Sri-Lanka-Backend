@@ -16,6 +16,7 @@ import aiRoutes from './routes/ai.routes.js';
 import ngoRoutes from './routes/ngo.routes.js';
 import ngoRequestRoutes from './routes/ngoRequest.routes.js';
 import gamificationRoutes from './routes/gamification.routes.js';
+import sustainabilityRoutes from './routes/sustainability.routes.js';
 import startExpiryService from './services/expiryService.js';
 import startReservationService from './services/reservationService.js';
 
@@ -74,6 +75,7 @@ app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/ngo', ngoRoutes);
 app.use('/api/v1/ngo-requests', ngoRequestRoutes);
 app.use('/api/v1/gamification', gamificationRoutes);
+app.use('/api/v1/sustainability', sustainabilityRoutes);
 
 // Health Check Endpoint
 app.get('/api/v1/health', (req, res) => {

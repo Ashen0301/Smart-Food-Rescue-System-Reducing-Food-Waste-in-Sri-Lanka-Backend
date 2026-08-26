@@ -108,12 +108,8 @@ export const getPublicLeaderboard = async (req, res) => {
   try {
     const { district, role } = req.query;
 
-    const query = {};
-    if (role && role !== 'ALL') {
-      query.role = role;
-    } else {
-      query.role = { $in: ['CONSUMER', 'VENDOR', 'NGO'] };
-    }
+    // Leaderboard strictly features food vendors & outlets
+    const query = { role: 'VENDOR' };
 
     if (district && district !== 'ALL') {
       query.district = { $regex: new RegExp(`^${district}$`, 'i') };

@@ -12,7 +12,11 @@ export const getNgoBulkDonations = async (req, res) => {
   try {
     const { district, category, search } = req.query;
 
-    const query = { status: 'ACTIVE', priceType: 'FREE' };
+    const query = {
+      status: 'ACTIVE',
+      priceType: 'FREE',
+      collectionEndDate: { $gt: new Date() },
+    };
     if (category && category !== 'ALL') query.category = category;
 
     let listings = await Listing.find(query)

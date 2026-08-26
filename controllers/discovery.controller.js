@@ -25,8 +25,11 @@ export const getNearbyConsumerListings = async (req, res) => {
       sort = 'newest',
     } = req.query;
 
-    // Base query: Active listings
-    const query = { status: 'ACTIVE' };
+    // Base query: Active and unexpired listings (expired listings remain in DB for vendor history but are removed from discovery)
+    const query = {
+      status: 'ACTIVE',
+      collectionEndDate: { $gt: new Date() },
+    };
 
     if (category && category !== 'ALL') {
       query.category = category;

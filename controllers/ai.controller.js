@@ -117,7 +117,10 @@ export const chatWithAI = async (req, res) => {
     // -------------------------------------------------------------
     if (role === 'CONSUMER') {
       const parsed = parseConsumerQuery(cleanMsg);
-      const query = { status: 'ACTIVE' };
+      const query = {
+        status: 'ACTIVE',
+        collectionEndDate: { $gt: new Date() },
+      };
 
       if (parsed.priceType !== 'ALL') query.priceType = parsed.priceType;
       if (parsed.category !== 'ALL') query.category = parsed.category;

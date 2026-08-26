@@ -1,6 +1,7 @@
 import NgoRequest from '../models/NgoRequest.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
+import { checkAndAwardBadges } from './gamification.controller.js';
 
 /**
  * @desc    Create a new Food Need Request (NGO Only)
@@ -122,6 +123,30 @@ export const fulfillNgoRequest = async (req, res) => {
     });
 
     await request.save();
+
+    // Gamification Points & Badges Update for Vendor & NGO
+    try {
+      const vendorUser = await User.findById(req.user.id);
+      const ngoUser = await User.findById(request.ngo);
+
+      if (vendorUser) {
+        vendorUser.points = (vendorUser.points || 0) + (100 + Math.round(qtyPledged * 20));
+        vendorUser.totalRescuedKg = (vendorUser.totalRescuedKg || 0) + qtyPledged;
+        vendorUser.totalCompletedOrders = (vendorUser.totalCompletedOrders || 0) + 1;
+        await vendorUser.save();
+        await checkAndAwardBadges(vendorUser);
+      }
+
+      if (ngoUser) {
+        ngoUser.points = (ngoUser.points || 0) + (150 + Math.round(qtyPledged * 25));
+        ngoUser.totalRescuedKg = (ngoUser.totalRescuedKg || 0) + qtyPledged;
+        ngoUser.totalCompletedOrders = (ngoUser.totalCompletedOrders || 0) + 1;
+        await ngoUser.save();
+        await checkAndAwardBadges(ngoUser);
+      }
+    } catch (gErr) {
+      console.error('Error updating gamification on NGO pledge:', gErr.message);
+    }
 
     // Create Notification for the NGO
     await Notification.create({

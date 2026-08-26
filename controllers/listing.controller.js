@@ -160,7 +160,10 @@ export const getAllListings = async (req, res) => {
   try {
     const { category, priceType, search } = req.query;
 
-    const query = { status: 'ACTIVE' };
+    const query = {
+      status: 'ACTIVE',
+      collectionEndDate: { $gt: new Date() },
+    };
 
     if (category && category !== 'ALL') query.category = category;
     if (priceType && priceType !== 'ALL') query.priceType = priceType;
