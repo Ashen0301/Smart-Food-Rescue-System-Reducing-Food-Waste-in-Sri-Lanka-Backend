@@ -77,6 +77,17 @@ app.use('/api/v1/ngo-requests', ngoRequestRoutes);
 app.use('/api/v1/gamification', gamificationRoutes);
 app.use('/api/v1/sustainability', sustainabilityRoutes);
 
+// Root / Welcome Endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    name: 'FoodSave LK Backend REST API',
+    message: 'Smart Food Rescue System Backend is operational',
+    version: '1.0.0',
+    documentation: '/api/v1/health',
+  });
+});
+
 // Health Check Endpoint
 app.get('/api/v1/health', (req, res) => {
   res.status(200).json({
@@ -96,10 +107,14 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-httpServer.listen(PORT, () => {
-  console.log(`🚀 FoodSave LK Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  console.log(`📡 Socket.IO Real-Time Notification Server is ACTIVE`);
-  // Initialize background automatic listing expiration & reservation cancellation runners
-  startExpiryService();
-  startReservationService();
-});
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 FoodSave LK Server running on port ${PORT}`);
+    console.log(`📡 Socket.IO Real-Time Notification Server is ACTIVE`);
+    // Initialize background automatic listing expiration & reservation cancellation runners
+    startExpiryService();
+    startReservationService();
+  });
+}
+
+export default app;
