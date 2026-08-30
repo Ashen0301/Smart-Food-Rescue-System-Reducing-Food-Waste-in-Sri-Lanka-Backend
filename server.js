@@ -23,8 +23,10 @@ import startReservationService from './services/reservationService.js';
 // Load Environment Variables
 dotenv.config();
 
-// Connect to MongoDB Atlas
-connectDB();
+// Connect to MongoDB Atlas (Initial connection attempt)
+connectDB().catch((err) => {
+  console.warn('Initial DB connection attempt failed, will retry on request:', err.message);
+});
 
 const app = express();
 const httpServer = createServer(app);
@@ -61,6 +63,21 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' })); // Allow base64 image uploads
+
+// Database Connection Middleware for Serverless execution
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('Database connection failed on request:', err.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Database connection failed. Please ensure MONGODB_URI is set in Vercel Environment Variables.',
+      error: err.message,
+    });
+  }
+});
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
@@ -102,6 +119,16 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: 'API Endpoint Not Found',
+  });
+});
+
+// Global Error Handler (Prevents serverless function invocation crash)
+app.use((err, req, res, next) => {
+  console.error('🔥 Server Error Handler caught:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Internal Server Error',
+    error: err.message || 'An unexpected error occurred',
   });
 });
 
