@@ -5,7 +5,8 @@ import jwt from 'jsonwebtoken';
  * Generate JWT Token helper
  */
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  const secret = process.env.JWT_SECRET || 'foodsave_secret_jwt_key_2026_lk';
+  return jwt.sign({ id }, secret, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 };

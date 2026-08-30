@@ -59,7 +59,7 @@ app.set('io', io);
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin: true,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' })); // Allow base64 image uploads
